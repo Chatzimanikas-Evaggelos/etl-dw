@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "afsauebchatzimanikas"
+		},
+		"etl_dw_1_password": {
+			"value": ""
+		},
+		"etl_dw_1_properties_typeProperties_server": {
+			"value": "afsauebchatzimanikas.database.windows.net"
+		},
+		"etl_dw_1_properties_typeProperties_database": {
+			"value": "AdventureWorks2019"
+		},
+		"etl_dw_1_properties_typeProperties_userName": {
+			"value": "AZ"
+		}
+	}
+}
