@@ -201,6 +201,310 @@
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Union_SalesOrderHeader",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Stage_ProductSubCategory",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Union_SalesOrderHeader",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "truncate_wrk",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Union_SalesOrderHeader",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "etl_dw_1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "IF OBJECT_ID('wrk.ProductCategory', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.ProductCategory; \nIF OBJECT_ID('wrk.Customer', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.Customer; \nIF OBJECT_ID('wrk.ProductSubcategory', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.ProductSubcategory; \nIF OBJECT_ID('wrk.SalesOrderHeader', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.SalesOrderHeader; \nIF OBJECT_ID('wrk.SalesOrderDetail', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.SalesOrderDetail; \nIF OBJECT_ID('wrk.Store', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.Store; \nIF OBJECT_ID('wrk.SalesTerritory', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.SalesTerritory; \nIF OBJECT_ID('wrk.Person', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.Person;\nIF OBJECT_ID('wrk.pre_fact', 'U') IS NOT NULL \nTRUNCATE TABLE wrk.pre_fact;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Select_Tables_From_STG",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "truncate_wrk",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT \nt.TABLE_SCHEMA AS schema_name, \nt.TABLE_NAME   AS table_name \nFROM INFORMATION_SCHEMA.TABLES t\nWHERE TABLE_TYPE = 'BASE TABLE' \n  AND (t.TABLE_SCHEMA + '.' + t.TABLE_NAME) IN ( \n        'stg.SalesOrderDetail', \n        'stg.Customer', \n        'stg.Person', \n        'stg.Store', \n        'stg.Product', \n        'stg.ProductCategory', \n        'stg.ProductSubcategory', \n         'stg.SalesOrderHeader', \n        'stg.SalesTerritory' \n  )",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSqlTable11",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Loop_STG",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Select_Tables_From_STG",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Select_Tables_From_STG').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy_STG",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"tableOption": "autoCreate",
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "AzureSqlTable12",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@item().schema_name",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@item().table_name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "AzureSqlTable13",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Color_Transform",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Loop_STG",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Color_Transform",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Name_And_Age_Manipulation",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Color_Transform",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Name_And_Age_Manipulation",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "DimCustomer",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Name_And_Age_Manipulation",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "etl_dw_1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "DELETE FROM dw.DimCustomer; \n \nINSERT INTO dw.DimCustomer ( \n    CustomerID, \n    CustomerType, \n    FirstName, \n    LastName, \n    MiddleName, \n    Age \n) \nSELECT  \n    c.CustomerID, \n    CASE  \n        WHEN c.PersonID IS NOT NULL THEN 'Person' \n        WHEN c.StoreID IS NOT NULL THEN 'Store' \nELSE 'Unknown' \n    END AS CustomerType, \n    p.First_Name, \n    p.Last_Name, \n    p.Middle_Name, \n    p.Age \nFROM wrk.Customer c \nLEFT JOIN wrk.Person p \n    ON c.PersonID = p.BusinessEntityID;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "DimDate",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Name_And_Age_Manipulation",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "etl_dw_1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "DELETE FROM dw.FactSales; \nDELETE FROM dw.DimDate; \nWITH DateCTE AS ( \nSELECT CAST('2010-01-01' AS DATE) AS TheDate \nUNION ALL \nSELECT DATEADD(DAY, 1, TheDate) \nFROM DateCTE \nWHERE TheDate < '2030-12-31' \n) \nINSERT INTO dw.DimDate ( \nDateKey, \nFullDate, \nDayNumberOfMonth, \nMonthNumber, \nMonthName, \nQuarterNumber, \nYearNumber \n) \nSELECT \nCAST(FORMAT(TheDate, 'yyyyMMdd') AS INT), \nTheDate, \nDAY(TheDate), \nMONTH(TheDate), \nDATENAME(MONTH, TheDate), \nDATEPART(QUARTER, TheDate), \nYEAR(TheDate) \nFROM DateCTE \nOPTION (MAXRECURSION 0);"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
 			}
 		],
 		"annotations": []

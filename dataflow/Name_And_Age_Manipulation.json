@@ -1,0 +1,75 @@
+{
+	"name": "Name_And_Age_Manipulation",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable7",
+						"type": "DatasetReference"
+					},
+					"name": "Person"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable8",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FirstName"
+				},
+				{
+					"name": "LastName"
+				},
+				{
+					"name": "MiddleName"
+				},
+				{
+					"name": "AgeYears"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          BusinessEntityID as integer,",
+				"          PersonType as string,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          Suffix as string,",
+				"          EmailPromotion as integer,",
+				"          AdditionalContactInfo as string,",
+				"          Demographics as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp,",
+				"          FullName as string,",
+				"          DateOfBirth as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Person",
+				"Person derive(FirstName = toString(split(trim(FullName), ' ')[1]) ) ~> FirstName",
+				"FirstName derive(LastName = regexExtract(trim(toString(FullName)), '([^ ]+)$', 1)) ~> LastName",
+				"LastName derive(MiddleName = iif(size(split(trim(toString(FullName)), ' ')) > 2, at(split(trim(toString(FullName)), ' '), 2), '')) ~> MiddleName",
+				"MiddleName derive(Age = toInteger(monthsBetween(currentDate(), DateOfBirth) / 12) ) ~> AgeYears",
+				"AgeYears sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}
