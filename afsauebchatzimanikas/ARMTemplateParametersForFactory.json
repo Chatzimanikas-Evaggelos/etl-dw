@@ -5,6 +5,9 @@
 		"factoryName": {
 			"value": "afsauebchatzimanikas"
 		},
+		"AzureBlobStorage2_connectionString": {
+			"value": ""
+		},
 		"etl_dw_1_password": {
 			"value": ""
 		},
