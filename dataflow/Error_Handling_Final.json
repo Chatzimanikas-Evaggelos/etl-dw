@@ -5,14 +5,48 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"dataset": {
+						"referenceName": "AzureSqlTable14",
+						"type": "DatasetReference"
+					},
 					"name": "SOH"
 				}
 			],
 			"sinks": [],
 			"transformations": [],
 			"scriptLines": [
-				"source(allowSchemaDrift: true,",
-				"     validateSchema: false) ~> SOH"
+				"source(output(",
+				"          SalesOrderID as string,",
+				"          RevisionNumber as string,",
+				"          OrderDate as string,",
+				"          DueDate as string,",
+				"          ShipDate as string,",
+				"          Status as string,",
+				"          OnlineOrderFlag as string,",
+				"          SalesOrderNumber as string,",
+				"          PurchaseOrderNumber as string,",
+				"          AccountNumber as string,",
+				"          CustomerID as string,",
+				"          SalesPersonID as string,",
+				"          TerritoryID as string,",
+				"          BillToAddressID as string,",
+				"          ShipToAddressID as string,",
+				"          ShipMethodID as string,",
+				"          CreditCardID as string,",
+				"          CreditCardApprovalCode as string,",
+				"          CurrencyRateID as string,",
+				"          SubTotal as string,",
+				"          TaxAmt as string,",
+				"          Freight as string,",
+				"          TotalDue as string,",
+				"          Comment as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SOH"
 			]
 		}
 	}
