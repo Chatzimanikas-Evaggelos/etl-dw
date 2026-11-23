@@ -474,7 +474,7 @@
 					"scripts": [
 						{
 							"type": "Query",
-							"text": "DELETE FROM dw.FactSales; \nDELETE FROM dw.DimCustomer; \nINSERT INTO dw.DimCustomer ( \nCustomerID, \nCustomerType, \nFirstName, \nLastName, \nMiddleName,\nAge \n) \nSELECT  \nc.CustomerID, \nCASE  \nWHEN c.PersonID IS NOT NULL THEN 'Person' \nWHEN c.StoreID IS NOT NULL THEN 'Store' \nELSE 'Unknown' \nEND AS CustomerType, \np.FirstName, \np.LastName, \np.MiddleName, \np.Age \nFROM wrk.Customer c \nLEFT JOIN wrk.Person p \nON c.PersonID = p.BusinessEntityID; \nDELETE FROM dw.FactSales; \nDELETE FROM dw.DimDate; \nWITH DateCTE AS ( \nSELECT CAST('2010-01-01' AS DATE) AS TheDate \nUNION ALL \nSELECT DATEADD(DAY, 1, TheDate) \nFROM DateCTE \nWHERE TheDate < '2030-12-31'\n) \nINSERT INTO dw.DimDate ( \nDateKey, \nFullDate, \nDayNumberOfMonth, \nMonthNumber, \nMonthName, \nQuarterNumber, \nYearNumber \n) \nSELECT \nCAST(FORMAT(TheDate, 'yyyyMMdd') AS INT), \nTheDate, \nDAY(TheDate), \nMONTH(TheDate), \nDATENAME(MONTH, TheDate), \nDATEPART(QUARTER, TheDate), \nYEAR(TheDate) \nFROM DateCTE \nOPTION (MAXRECURSION 0);"
+							"text": "DELETE FROM dw.FactSales;\nDELETE FROM dw.DimCustomer;\nINSERT INTO dw.DimCustomer (\n    CustomerID,\n    CustomerType,\n    FirstName,\n    LastName,\n    MiddleName,\n    Age\n)\nSELECT\n    c.CustomerID,\n    CASE\n        WHEN c.PersonID IS NOT NULL THEN 'Person'\n        WHEN c.StoreID IS NOT NULL THEN 'Store'\n        ELSE 'Unknown'\n    END AS CustomerType,\n    p.FirstName,\n    p.LastName,\n    p.MiddleName,\n    p.Age\nFROM wrk.Customer c\nLEFT JOIN wrk.Person p\n    ON c.PersonID = p.BusinessEntityID;"
 						}
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"

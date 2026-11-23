@@ -1,0 +1,19 @@
+{
+	"name": "Error_Handling_Final",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"name": "SOH"
+				}
+			],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false) ~> SOH"
+			]
+		}
+	}
+}
