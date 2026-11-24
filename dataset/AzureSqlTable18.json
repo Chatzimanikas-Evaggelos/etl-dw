@@ -1,0 +1,46 @@
+{
+	"name": "AzureSqlTable18",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "etl_dw_1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ErrorID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SalesOrderID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SalesOrderDetailID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CustomerID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ErrorDescription",
+				"type": "varchar"
+			},
+			{
+				"name": "ErrorDate",
+				"type": "datetime2",
+				"scale": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "dw",
+			"table": "error_FactSales"
+		}
+	}
+}
